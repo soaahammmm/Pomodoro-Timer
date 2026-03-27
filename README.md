@@ -1,507 +1,64 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Productivity Hue Timer</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+Productivity Hue Timer
+A Pomodoro-style focus timer that shifts the entire background color based on how long you have been working uninterrupted. Built as a single, zero-dependency HTML file.
+Links
+Live Demo:https://69bbfd95a122f1349ee9f252--ubiquitous-dasik-258bd3.netlify.app/ 
+Repository: https://github.com/soaahammmm/Pomodoro-Timer
+Concept
+Most timers just count down. This one responds to specific areas in the pomodoro technique . The longer you stay focused, the warmer and more energized the color becomes. Pause it and the whole screen desaturates, a subtle but powerful visual cue that your focus streak has broken.
+
+Color Phases
+Phase
+Time Range
+Color
+Meaning
+Warming Up
+0 - 10 min
+Blue
+Calm, just getting started
+Deep Focus
+10 - 25 min
+Teal
+Settled in, building momentum
+Peak Flow
+25 - 45 min
+Purple
+Full concentration
+Burnout Warning
+45+ min
+Red
+Time to take a break
+
+
+Features
+Smooth background color transitions between all focus phases
+Glassmorphism card with animated ambient background orbs
+Pausing desaturates the entire screen to signal a break
+Pulsing red glow at the burnout stage as a visual alert
+Progress bar that fills across the 45-minute window
+Phase indicator pips that activate as you move through stages
+Accurate timing using Date.now() delta tracking, resistant to tab throttling
+Fully responsive layout for desktop, tablet, or snapped windows
+No frameworks, no build step, no dependencies
+
+How to Use
+Open index.html directly in any browser. No install or server needed.
+To run locally:
+Download or clone the repository
+Open index.html in your browser
+Click Start and focus
+
+Tech Stack
+HTML, CSS, JavaScript (vanilla)
+Google Fonts: DM Mono and Syne
+CSS glassmorphism with backdrop-filter blur
+SVG noise texture overlay
+No external libraries or frameworks
+
+File Structure
+productivity-hue-timer/
+  index.html    -- entire app in one file
+  README.md     -- this file
+
+About
+Built as a personal productivity tool and front-end design project. The goal was to create something functional, visually distinctive, and deployable instantly without any build tooling.
 
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --c-warmup:   #2563eb;
-      --c-focus:    #0d9488;
-      --c-flow:     #7c3aed;
-      --c-burnout:  #dc2626;
-      --c-paused:   #6b7280;
-      --bg-current: var(--c-warmup);
-      --transition-speed: 2s;
-      --glass-bg:      rgba(255,255,255,0.08);
-      --glass-border:  rgba(255,255,255,0.18);
-      --glass-shadow:  0 8px 64px rgba(0,0,0,0.35);
-      --text-primary:  rgba(255,255,255,0.97);
-      --text-secondary:rgba(255,255,255,0.55);
-      --btn-radius:    12px;
-    }
-
-    html, body {
-      height: 100%;
-      font-family: 'Syne', sans-serif;
-    }
-
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      background-color: var(--bg-current);
-      transition: background-color var(--transition-speed) ease-in-out;
-      overflow: hidden;
-    }
-
-    .bg-orbs {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      overflow: hidden;
-      z-index: 0;
-    }
-
-    .orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(90px);
-      opacity: 0.35;
-      animation: drift 18s ease-in-out infinite alternate;
-      transition: background-color var(--transition-speed) ease-in-out;
-    }
-
-    .orb-1 { width: 55vw; height: 55vw; top: -15%; left: -10%; animation-delay: 0s; }
-    .orb-2 { width: 40vw; height: 40vw; bottom: -10%; right: -5%; animation-delay: -6s; }
-    .orb-3 { width: 30vw; height: 30vw; top: 40%; left: 55%; animation-delay: -12s; }
-
-    @keyframes drift {
-      from { transform: translate(0, 0) scale(1); }
-      to   { transform: translate(3%, 5%) scale(1.08); }
-    }
-
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-      opacity: 0.04;
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    .card {
-      position: relative;
-      z-index: 2;
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 28px;
-      box-shadow: var(--glass-shadow);
-      backdrop-filter: blur(24px) saturate(160%);
-      -webkit-backdrop-filter: blur(24px) saturate(160%);
-      padding: clamp(36px, 6vw, 64px) clamp(40px, 7vw, 80px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0;
-      width: min(500px, 92vw);
-      transition: box-shadow var(--transition-speed) ease-in-out;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 8px;
-    }
-
-    .header h1 {
-      font-size: clamp(13px, 1.8vw, 15px);
-      font-weight: 600;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--text-secondary);
-      margin-bottom: 4px;
-    }
-
-    .phase-label {
-      font-size: clamp(11px, 1.5vw, 13px);
-      font-weight: 600;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.38);
-      height: 18px;
-      transition: color 1s ease;
-      margin-bottom: 28px;
-    }
-
-    .time-wrapper {
-      position: relative;
-      margin-bottom: 12px;
-    }
-
-    .time-display {
-      font-family: 'DM Mono', monospace;
-      font-size: clamp(72px, 18vw, 108px);
-      font-weight: 300;
-      color: var(--text-primary);
-      letter-spacing: -0.03em;
-      line-height: 1;
-      text-shadow: 0 0 60px rgba(255,255,255,0.12);
-      transition: text-shadow var(--transition-speed) ease-in-out;
-      user-select: none;
-    }
-
-    .colon {
-      display: inline-block;
-      animation: blink 1s step-end infinite;
-    }
-    .running .colon { animation: none; opacity: 1; }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.2; }
-    }
-
-    .arc-wrapper {
-      margin: 12px 0 32px;
-      position: relative;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-    }
-
-    .progress-ring {
-      transform: rotate(-90deg);
-      overflow: visible;
-    }
-
-    .ring-bg {
-      fill: none;
-      stroke: rgba(255,255,255,0.08);
-      stroke-width: 3;
-    }
-
-    .ring-fill {
-      fill: none;
-      stroke: rgba(255,255,255,0.55);
-      stroke-width: 3;
-      stroke-linecap: round;
-      transition: stroke-dashoffset 1s linear, stroke var(--transition-speed) ease-in-out;
-    }
-
-    .phase-pips {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 36px;
-      align-items: center;
-    }
-
-    .pip {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      opacity: 0.35;
-      transition: opacity 0.6s ease;
-    }
-
-    .pip.active { opacity: 1; }
-
-    .pip-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.7);
-      transition: transform 0.4s ease, background 0.4s ease;
-    }
-
-    .pip.active .pip-dot {
-      transform: scale(1.5);
-      background: #fff;
-      box-shadow: 0 0 10px rgba(255,255,255,0.6);
-    }
-
-    .pip-name {
-      font-size: 9px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-secondary);
-      font-weight: 600;
-    }
-
-    body.burnout .card {
-      animation: burnout-pulse 3s ease-in-out infinite;
-    }
-
-    @keyframes burnout-pulse {
-      0%, 100% { box-shadow: var(--glass-shadow); }
-      50%       { box-shadow: 0 8px 80px rgba(220, 38, 38, 0.45); }
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 14px;
-      width: 100%;
-    }
-
-    .btn {
-      flex: 1;
-      padding: 15px 10px;
-      border: 1px solid var(--glass-border);
-      border-radius: var(--btn-radius);
-      background: rgba(255,255,255,0.1);
-      color: var(--text-primary);
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(12px, 1.6vw, 14px);
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      cursor: pointer;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: rgba(255,255,255,0);
-      transition: background 0.2s ease;
-    }
-
-    .btn:hover::after  { background: rgba(255,255,255,0.07); }
-    .btn:active        { transform: scale(0.97); }
-
-    .btn-start {
-      background: rgba(255,255,255,0.18);
-      border-color: rgba(255,255,255,0.30);
-      box-shadow: 0 4px 24px rgba(255,255,255,0.08);
-    }
-
-    .btn-start:hover {
-      background: rgba(255,255,255,0.25);
-      box-shadow: 0 4px 32px rgba(255,255,255,0.15);
-    }
-
-    .btn-reset {
-      background: rgba(255,255,255,0.05);
-    }
-
-    .status-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 22px;
-    }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.3);
-      transition: background 0.4s ease;
-    }
-
-    .status-dot.live {
-      background: #4ade80;
-      box-shadow: 0 0 8px #4ade80;
-      animation: live-pulse 1.8s ease-in-out infinite;
-    }
-
-    .status-dot.paused-dot { background: rgba(255,255,255,0.25); animation: none; }
-
-    @keyframes live-pulse {
-      0%, 100% { box-shadow: 0 0 6px #4ade80; }
-      50%       { box-shadow: 0 0 14px #4ade80; }
-    }
-
-    .status-text {
-      font-size: 11px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--text-secondary);
-      font-weight: 600;
-    }
-
-    body.paused {
-      filter: saturate(0.25);
-      transition: filter 1.2s ease, background-color var(--transition-speed) ease-in-out;
-    }
-
-    body.paused .time-display {
-      opacity: 0.6;
-    }
-
-    body.running {
-      filter: saturate(1);
-      transition: filter 1.2s ease, background-color var(--transition-speed) ease-in-out;
-    }
-
-    @media (max-width: 420px) {
-      .btn-group { flex-direction: column; }
-      .btn       { padding: 14px; }
-    }
-  </style>
-</head>
-<body class="paused" id="body">
-
-  <div class="bg-orbs">
-    <div class="orb orb-1" id="orb1"></div>
-    <div class="orb orb-2" id="orb2"></div>
-    <div class="orb orb-3" id="orb3"></div>
-  </div>
-
-  <div class="card" id="card">
-
-    <div class="header">
-      <h1>Productivity Hue</h1>
-    </div>
-
-    <div class="phase-label" id="phaseLabel">Ready to focus</div>
-
-    <div class="time-wrapper">
-      <div class="time-display" id="timeDisplay">
-        00<span class="colon" id="colon">:</span>00
-      </div>
-    </div>
-
-    <div class="arc-wrapper">
-      <svg class="progress-ring" width="260" height="20" viewBox="0 0 260 20">
-        <line class="ring-bg"   x1="10" y1="10" x2="250" y2="10" stroke-linecap="round"/>
-        <line class="ring-fill" x1="10" y1="10" x2="250" y2="10"
-              id="progressLine"
-              stroke-dasharray="240"
-              stroke-dashoffset="240"/>
-      </svg>
-    </div>
-
-    <div class="phase-pips">
-      <div class="pip active" id="pip0">
-        <div class="pip-dot"></div>
-        <span class="pip-name">Warm</span>
-      </div>
-      <div class="pip" id="pip1">
-        <div class="pip-dot"></div>
-        <span class="pip-name">Focus</span>
-      </div>
-      <div class="pip" id="pip2">
-        <div class="pip-dot"></div>
-        <span class="pip-name">Flow</span>
-      </div>
-      <div class="pip" id="pip3">
-        <div class="pip-dot"></div>
-        <span class="pip-name">Break!</span>
-      </div>
-    </div>
-
-    <div class="btn-group">
-      <button class="btn btn-start" id="startBtn" onclick="toggleTimer()">Start</button>
-      <button class="btn btn-reset"              onclick="resetTimer()">Reset</button>
-    </div>
-
-    <div class="status-row">
-      <div class="status-dot paused-dot" id="statusDot"></div>
-      <span class="status-text" id="statusText">Idle</span>
-    </div>
-
-  </div>
-
-  <script>
-    let elapsed  = 0;
-    let running  = false;
-    let interval = null;
-    let lastTick = null;
-
-    const PHASES = [
-      { upTo: 600,      label: 'Warming Up',        color: '#2563eb', orb: '#3b82f6' },
-      { upTo: 1500,     label: 'Deep Focus',         color: '#0d9488', orb: '#14b8a6' },
-      { upTo: 2700,     label: 'Peak Flow ⚡',       color: '#7c3aed', orb: '#a78bfa' },
-      { upTo: Infinity, label: 'Take a Break 🔴',   color: '#dc2626', orb: '#f87171' },
-    ];
-
-    const body         = document.getElementById('body');
-    const timeDisplay  = document.getElementById('timeDisplay');
-    const phaseLabel   = document.getElementById('phaseLabel');
-    const startBtn     = document.getElementById('startBtn');
-    const statusDot    = document.getElementById('statusDot');
-    const statusText   = document.getElementById('statusText');
-    const progressLine = document.getElementById('progressLine');
-    const pips         = [0,1,2,3].map(i => document.getElementById('pip' + i));
-    const orb1         = document.getElementById('orb1');
-    const orb2         = document.getElementById('orb2');
-    const orb3         = document.getElementById('orb3');
-
-    function pad(n) { return String(Math.floor(n)).padStart(2, '0'); }
-
-    function formatTime(s) {
-      const m = Math.floor(s / 60);
-      const sec = s % 60;
-      return `${pad(m)}<span class="colon" id="colon">:</span>${pad(sec)}`;
-    }
-
-    function getPhaseIndex(s) {
-      return PHASES.findIndex(p => s < p.upTo);
-    }
-
-    function applyPhase(idx, isRunning) {
-      const phase = PHASES[idx];
-      body.style.backgroundColor = isRunning ? phase.color : '#374151';
-      const orb = isRunning ? phase.orb : '#9ca3af';
-      orb1.style.backgroundColor = orb;
-      orb2.style.backgroundColor = orb;
-      orb3.style.backgroundColor = orb;
-      phaseLabel.textContent = isRunning ? phase.label : 'Paused';
-      pips.forEach((p, i) => p.classList.toggle('active', i <= idx && isRunning));
-      body.classList.toggle('burnout', idx === 3 && isRunning);
-      const fill = Math.min(elapsed / 2700, 1) * 240;
-      progressLine.style.strokeDashoffset = String(240 - fill);
-      progressLine.style.stroke = isRunning ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)';
-    }
-
-    function updateUI() {
-      timeDisplay.innerHTML = formatTime(elapsed);
-      const idx = getPhaseIndex(elapsed);
-      applyPhase(idx, running);
-
-      if (running) {
-        body.classList.remove('paused');
-        body.classList.add('running');
-        statusDot.className = 'status-dot live';
-        statusText.textContent = 'Running';
-        startBtn.textContent = 'Pause';
-      } else {
-        body.classList.remove('running');
-        body.classList.add('paused');
-        statusDot.className = 'status-dot paused-dot';
-        statusText.textContent = elapsed > 0 ? 'Paused' : 'Idle';
-        startBtn.textContent = elapsed > 0 ? 'Resume' : 'Start';
-      }
-    }
-
-    function toggleTimer() {
-      running ? pauseTimer() : startTimer();
-    }
-
-    function startTimer() {
-      running  = true;
-      lastTick = Date.now();
-      interval = setInterval(() => {
-        const now   = Date.now();
-        const delta = Math.floor((now - lastTick) / 1000);
-        if (delta >= 1) {
-          elapsed  += delta;
-          lastTick  = now;
-          updateUI();
-        }
-      }, 250);
-      updateUI();
-    }
-
-    function pauseTimer() {
-      running = false;
-      clearInterval(interval);
-      interval = null;
-      updateUI();
-    }
-
-    function resetTimer() {
-      pauseTimer();
-      elapsed = 0;
-      phaseLabel.textContent = 'Ready to focus';
-      updateUI();
-    }
-
-    updateUI();
-  </script>
-</body>
-</html>
