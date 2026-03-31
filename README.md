@@ -6,7 +6,7 @@ A Pomodoro-style focus timer that shifts the entire background color based on ho
 
 ## Links
 
-- **Live Demo:** [your-netlify-link-here]
+- **Live Demo:** https://69bbfd95a122f1349ee9f252--ubiquitous-dasik-258bd3.netlify.app
 - **Repository:** https://github.com/soaahammmm/Pomodoro-Timer
 
 ---
