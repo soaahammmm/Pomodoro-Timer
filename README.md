@@ -64,3 +64,7 @@ To run locally:
 ---
 
 ## File Structure
+productivity-hue-timer
+index.html    -- entire app in one file
+README.md     -- this file
+
